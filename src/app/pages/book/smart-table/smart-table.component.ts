@@ -13,7 +13,7 @@ const StateList = [
   { value: 'B', title: 'Borrowable' },
   { value: 'D', title: 'Discontinued' },
   { value: 'M', title: 'Maintaining' },
-]
+];
 
 @Component({
   selector: 'ngx-smart-table',

@@ -25,6 +25,7 @@ export class ECommerceVisitorsAnalyticsComponent implements OnDestroy {
         this.setLegendItems(theme.variables.visitorsLegend);
       });
 
+    // tslint:disable-next-line: deprecation
     forkJoin(
       this.visitorsAnalyticsChartService.getInnerLineChartData(),
       this.visitorsAnalyticsChartService.getOutlineLineChartData(),
