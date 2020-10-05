@@ -4,5 +4,5 @@ import { Component } from '@angular/core';
   selector: 'ngx-ecommerce',
   templateUrl: './e-commerce.component.html',
 })
-export class ECommerceComponent {
+export class DashboardComponent {
 }

@@ -6,7 +6,7 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NgModule } from '@angular/core';
-import { HttpClientModule } from '@angular/common/http';
+import { HttpClientModule, HttpClient } from '@angular/common/http';
 import { CoreModule } from './@core/core.module';
 import { ThemeModule } from './@theme/theme.module';
 import { AppComponent } from './app.component';
@@ -20,14 +20,37 @@ import {
   NbToastrModule,
   NbWindowModule,
 } from '@nebular/theme';
+import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { OwlDateTimeModule, OwlNativeDateTimeModule } from 'ng-pick-datetime';
+import { SmartTableDatepickerComponent, SmartTableDatepickerRenderComponent } from './pages/tables/smart-table-datepicker/smart-table-datepicker.component';
+import { SmartTableDateTimepickerComponent, SmartTableDateTimepickerRenderComponent } from './pages/tables/smart-table-datepicker/smart-table-datetimepicker.component';
+import { FormsModule } from '@angular/forms';
+import { AuthGuard } from './auth/auth-guard.service';
+import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
+import { TranslateHttpLoader } from '@ngx-translate/http-loader';
+
+// AoT requires an exported function for factories
+export function HttpLoaderFactory(http: HttpClient) {
+  return new TranslateHttpLoader(http);
+}
 
 @NgModule({
-  declarations: [AppComponent],
+  declarations: [
+    AppComponent,
+    SmartTableDatepickerComponent,
+    SmartTableDatepickerRenderComponent,
+    SmartTableDateTimepickerComponent,
+    SmartTableDateTimepickerRenderComponent,
+  ],
   imports: [
     BrowserModule,
     BrowserAnimationsModule,
     HttpClientModule,
     AppRoutingModule,
+    Ng2SmartTableModule,
+    FormsModule,
+    OwlDateTimeModule,
+    OwlNativeDateTimeModule,
     NbSidebarModule.forRoot(),
     NbMenuModule.forRoot(),
     NbDatepickerModule.forRoot(),
@@ -39,6 +62,22 @@ import {
     }),
     CoreModule.forRoot(),
     ThemeModule.forRoot(),
+    TranslateModule.forRoot({
+      loader: {
+        provide: TranslateLoader,
+        useFactory: HttpLoaderFactory,
+        deps: [HttpClient],
+      },
+    }),
+  ],
+  providers: [
+    AuthGuard,
+  ],
+  entryComponents: [
+    SmartTableDatepickerComponent,
+    SmartTableDatepickerRenderComponent,
+    SmartTableDateTimepickerComponent,
+    SmartTableDateTimepickerRenderComponent,
   ],
   bootstrap: [AppComponent],
 })

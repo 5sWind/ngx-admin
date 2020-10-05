@@ -2,15 +2,65 @@ import { NbMenuItem } from '@nebular/theme';
 
 export const MENU_ITEMS: NbMenuItem[] = [
   {
-    title: 'E-commerce',
-    icon: 'shopping-cart-outline',
+    title: '主页',
+    icon: 'home-outline',
     link: '/pages/dashboard',
     home: true,
   },
   {
-    title: 'IoT Dashboard',
-    icon: 'home-outline',
-    link: '/pages/iot-dashboard',
+    title: '部门管理',
+    icon: 'people-outline',
+    link: '/pages/department',
+  },
+  {
+    title: '员工管理',
+    icon: 'person-outline',
+    link: '/pages/employee',
+  },
+  {
+    title: '书籍管理',
+    icon: 'book-outline',
+    link: '/pages/book',
+  },
+  {
+    title: '读者管理',
+    icon: 'smiling-face-outline',
+    link: '/pages/reader',
+  },
+  {
+    title: '借阅管理',
+    icon: 'book-open-outline',
+    link: '/pages/lending',
+  },
+  {
+    title: '供应商管理',
+    icon: 'car-outline',
+    link: '/pages/vendor',
+  },
+  {
+    title: '库存管理',
+    icon: 'shopping-bag-outline',
+    link: '/pages/warehouse',
+  },
+  {
+    title: '采购管理',
+    icon: 'shopping-cart-outline',
+    link: '/pages/procurement',
+  },
+  {
+    title: '到货管理',
+    icon: 'cube-outline',
+    link: '/pages/arrival',
+  },
+  {
+    title: '系统管理',
+    icon: 'settings-2-outline',
+    link: '/pages/system',
+  },
+  {
+    title: '数据管理',
+    icon: 'bar-chart-outline',
+    link: '/pages/data',
   },
   {
     title: 'FEATURES',
