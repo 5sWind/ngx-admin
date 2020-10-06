@@ -110,5 +110,7 @@ export class SmartTableComponent {
     }
   }
 
-  onSaveCheck(event)
+  onSaveCheck(event): void {
+    
+  }
 }
