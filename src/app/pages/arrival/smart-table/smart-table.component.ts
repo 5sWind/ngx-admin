@@ -110,7 +110,7 @@ export class SmartTableComponent {
     }
   }
 
-  onSaveCheck(event): void {
+  onSaveConfirm(event): void {
     if (window.confirm('Are you sure you want to save?')) {
       event.newData['name'] += ' + added in code';
       console.log(event.newData);
