@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { NbAccessChecker } from '@nebular/security';
 
 @Component({
   selector: 'ngx-employee',
@@ -7,6 +8,7 @@ import { Component } from '@angular/core';
 })
 
 export class EmployeeComponent {
+  constructor(public accessChecker: NbAccessChecker) { }
 
   // private alive = true;
 

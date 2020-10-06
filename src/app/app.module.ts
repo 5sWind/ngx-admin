@@ -28,6 +28,9 @@ import { FormsModule } from '@angular/forms';
 import { AuthGuard } from './auth/auth-guard.service';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
+import { NbSecurityModule, NbRoleProvider } from '@nebular/security';
+import { of as observableOf } from 'rxjs/observable/of';
+import { RoleProvider } from './auth/role/role.provider';
 
 // AoT requires an exported function for factories
 export function HttpLoaderFactory(http: HttpClient) {
@@ -69,9 +72,34 @@ export function HttpLoaderFactory(http: HttpClient) {
         deps: [HttpClient],
       },
     }),
+    NbSecurityModule.forRoot({
+      accessControl: {
+        guest: {
+          view: ['news', 'comments', 'user'],
+        },
+        user: {
+          parent: 'guest',
+          create: 'comments',
+        },
+        moderator: {
+          parent: 'user',
+          create: 'news',
+          remove: '*',
+        },
+      },
+    }),
   ],
   providers: [
     AuthGuard,
+    {
+      provide: NbRoleProvider,
+      useValue: {
+        getRole: () => {
+          return observableOf(['guest', 'user', 'editor']);
+        },
+      },
+    },
+    { provide: NbRoleProvider, useClass: RoleProvider }, // provide the class
   ],
   entryComponents: [
     SmartTableDatepickerComponent,

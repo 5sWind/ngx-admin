@@ -65,10 +65,10 @@ const formSetting: any = {
                     },
                     logout: {
                         endpoint: '/auth/logout',
-                        // method: null,
+                        method: 'post',
                         redirect: {
                             success: '/',
-                            failure: '/',
+                            failure: null,
                         },
                     },
                     requestPass: {
