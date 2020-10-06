@@ -31,11 +31,21 @@ import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { NbSecurityModule, NbRoleProvider } from '@nebular/security';
 import { of as observableOf } from 'rxjs/observable/of';
 import { RoleProvider } from './auth/role/role.provider';
+import { NbAuthModule, NbPasswordAuthStrategy, NbAuthJWTToken } from '@nebular/auth';
 
 // AoT requires an exported function for factories
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http);
 }
+
+const formSetting: any = {
+  redirectDelay: 0,
+  strategy: 'email',
+  showMessages: {
+    success: true,
+    error: true,
+  },
+};
 
 @NgModule({
   declarations: [
@@ -75,16 +85,114 @@ export function HttpLoaderFactory(http: HttpClient) {
     NbSecurityModule.forRoot({
       accessControl: {
         guest: {
-          view: ['news', 'comments', 'user'],
+          view: ['user', 'profile', 'home'],
         },
-        user: {
+        reader: {
           parent: 'guest',
-          create: 'comments',
+          view: ['lending', 'data'],
+          create: ['comment'],
         },
-        moderator: {
-          parent: 'user',
-          create: 'news',
+        librarian: {
+          parent: 'guest',
+          view: ['book'],
+        },
+        officer: {
+          parent: 'guest',
+          view: ['department', 'employee', 'reader', 'data'],
+          create: ['comment'],
+        },
+        technician: {
+          parent: 'guest',
+          view: ['book', 'system', 'data'],
+        },
+        merchandiser: {
+          parent: 'guest',
+          view: ['procurment', 'arrival'],
+        },
+        storekeeper: {
+          parent: 'guest',
+          view: ['warehouse'],
+        },
+        vendor: {
+          parent: 'guest',
+          view: ['vendor', 'arrival'],
+        },
+        administrator: {
+          view: '*',
+          edit: '*',
+          create: '*',
           remove: '*',
+        },
+      },
+    }),
+
+    NbAuthModule.forRoot({
+      strategies: [
+        NbPasswordAuthStrategy.setup({
+          name: 'email',
+          baseEndpoint: 'http://localhost:3000',
+          token: {
+            class: NbAuthJWTToken,
+            key: 'token',
+          },
+          login: {
+            endpoint: '/auth/login',
+            method: 'post',
+            defaultErrors: ['登录失败，请验证用户名和密码。'],
+            redirect: {
+              success: '/pages/dashboard',
+              failure: null, // stay on the same page
+            },
+          },
+          register: {
+            endpoint: '/auth/register',
+            method: 'post',
+            redirect: {
+              success: '/auth/login',
+              failure: null, // stay on the same page
+            },
+          },
+          logout: {
+            endpoint: '/auth/logout',
+            method: 'post',
+            redirect: {
+              success: '/',
+              failure: null,
+            },
+          },
+          requestPass: {
+            endpoint: '/auth/request-pass',
+            method: 'post',
+          },
+          resetPass: {
+            endpoint: '/auth/reset-pass',
+            method: 'post',
+          },
+        }),
+      ],
+      forms: {
+        login: formSetting,
+        register: formSetting,
+        requestPassword: formSetting,
+        resetPassword: formSetting,
+        logout: {
+          redirectDelay: 0,
+          strategy: 'email',
+        },
+        validation: {
+          password: {
+            required: true,
+            minLength: 4,
+            maxLength: 50,
+          },
+          email: {
+            required: true,
+          },
+          fullName: {
+            required: false,
+            minLength: 4,
+            maxLength: 50,
+          },
         },
       },
     }),
@@ -95,7 +203,7 @@ export function HttpLoaderFactory(http: HttpClient) {
       provide: NbRoleProvider,
       useValue: {
         getRole: () => {
-          return observableOf(['guest', 'user', 'editor']);
+          return observableOf('guest');
         },
       },
     },

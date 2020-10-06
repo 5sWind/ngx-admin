@@ -65,6 +65,7 @@
   @include media-breakpoint-down(is) {
     nb-select {
       display: none;
+      margin-right: 2.5rem;
     }
   }
 }
