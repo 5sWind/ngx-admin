@@ -113,7 +113,17 @@ export class SmartTableComponent {
   onSaveConfirm(event): void {
     if (window.confirm('Are you sure you want to save?')) {
       event.newData['name'] += ' + added in code';
-      console.log(event.newData);
+      // console.log(event.newData);
+      event.confirm.resolve(event.newData);
+    } else {
+      event.confirm.reject();
+    }
+  }
+
+  onCreateConfirm(event): void {
+    if (window.confirm('Are you sure you want to create?')) {
+      event.newData['name'] += ' + added in code';
+      // console.log(event.newData);
       event.confirm.resolve(event.newData);
     } else {
       event.confirm.reject();
