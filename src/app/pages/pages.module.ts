@@ -17,6 +17,7 @@ import { WarehouseModule } from './warehouse/warehouse.module';
 import { ArrivalModule } from './arrival/arrival.module';
 import { DataModule } from './data/data.module';
 import { SystemModule } from './system/system.module';
+import { TranslateModule } from '@ngx-translate/core';
 
 @NgModule({
   imports: [
@@ -36,6 +37,7 @@ import { SystemModule } from './system/system.module';
     SystemModule,
     ECommerceModule,
     MiscellaneousModule,
+    TranslateModule,
   ],
   declarations: [
     PagesComponent,

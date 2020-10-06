@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { LocalDataSource } from 'ng2-smart-table';
 import { SmartTableData } from '../../../@core/data/smart-table';
 import { SmartTableDatepickerComponent, SmartTableDatepickerRenderComponent } from '../../tables/smart-table-datepicker/smart-table-datepicker.component';
+import { TranslateService } from '@ngx-translate/core';
 
 const ResultList = [
   { value: 'P', title: 'Pass' },
@@ -24,11 +25,13 @@ export class SmartTableComponent {
       addButtonContent: '<i class="nb-plus"></i>',
       createButtonContent: '<i class="nb-checkmark"></i>',
       cancelButtonContent: '<i class="nb-close"></i>',
+      confirmCreate: true,
     },
     edit: {
       editButtonContent: '<i class="nb-edit"></i>',
       saveButtonContent: '<i class="nb-checkmark"></i>',
       cancelButtonContent: '<i class="nb-close"></i>',
+      confirmSave: true,
     },
     delete: {
       deleteButtonContent: '<i class="nb-trash"></i>',
@@ -48,7 +51,7 @@ export class SmartTableComponent {
         type: 'string',
       },
       Eid: {
-        title: '员工编号',
+        title: '员工ID',
         type: 'string',
       },
       Adate: {
@@ -96,14 +99,18 @@ export class SmartTableComponent {
   };
 
   source: LocalDataSource = new LocalDataSource();
+  message: string;
 
-  constructor(private service: SmartTableData) {
+  constructor(private service: SmartTableData, private translate: TranslateService) {
     const data = this.service.getData();
     this.source.load(data);
   }
 
   onDeleteConfirm(event): void {
-    if (window.confirm('确定删除?')) {
+    this.translate.get('TABLE.DELETE').subscribe((text: string) => {
+      this.message = text;
+    });
+    if (window.confirm(this.message)) {
       event.confirm.resolve();
     } else {
       event.confirm.reject();
@@ -111,22 +118,25 @@ export class SmartTableComponent {
   }
 
   onSaveConfirm(event): void {
-    if (window.confirm('Are you sure you want to save?')) {
-      event.newData['name'] += ' + added in code';
-      // console.log(event.newData);
-      event.confirm.resolve(event.newData);
-    } else {
-      event.confirm.reject();
-    }
+    this.onFormCheck(event);
   }
 
   onCreateConfirm(event): void {
-    if (window.confirm('Are you sure you want to create?')) {
-      event.newData['name'] += ' + added in code';
-      // console.log(event.newData);
-      event.confirm.resolve(event.newData);
+    this.onFormCheck(event);
+  }
+
+  onFormCheck(event): void {
+    if (!event.newData['Aid']) {
+      window.alert('到货单号不能为空！');
+    } else if (!event.newData['Bid']) {
+      window.alert('图书ID不能为空！');
+    } else if (!event.newData['Pid']) {
+      window.alert('采购单号不能为空！');
+    } else if (!event.newData['Eid']) {
+      window.alert('员工ID不能为空！');
     } else {
-      event.confirm.reject();
+      event.confirm.resolve(event.newData);
     }
+    event.confirm.reject();
   }
 }

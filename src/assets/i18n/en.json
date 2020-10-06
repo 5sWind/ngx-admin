@@ -1,3 +1,8 @@
 {
-    "LOGOUT": "Logging out, please wait..."
+    "LOGOUT": "Logging out, please wait...",
+    "TABLE": {
+        "DELETE": "Are you sure you want to delete?",
+        "SAVE": "Are you sure you want to save?",
+        "CREATE": "Are you sure you want to create?"
+    }
 }
