@@ -43,20 +43,8 @@ export class SmartTableComponent {
         title: '仓库名称',
         type: 'string',
       },
-      Waddr: {
+      Waddress: {
         title: '仓库地址',
-        type: 'string',
-      },
-      Wprincial: {
-        title: '负责人',
-        type: 'string',
-      },
-      Wphone: {
-        title: '负责人电话',
-        type: 'number',
-      },
-      Wemail: {
-        title: '负责人邮箱',
         type: 'string',
       },
       Wmemo: {
@@ -100,7 +88,7 @@ export class SmartTableComponent {
       window.alert('员工ID不能为空！');
     } else if (!event.newData['Wname']) {
       window.alert('仓库名称不能为空！');
-    } else if (!event.newData['Waddr']) {
+    } else if (!event.newData['Waddress']) {
       window.alert('仓库地址不能为空！');
     } else {
       event.confirm.resolve(event.newData);

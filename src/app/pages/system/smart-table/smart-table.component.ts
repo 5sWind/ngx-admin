@@ -90,6 +90,8 @@ export class SmartTableComponent {
       window.alert('系统ID不能为空！');
     } else if (!event.newData['Did']) {
       window.alert('部门ID不能为空！');
+    } else if (!event.newData['Sname']) {
+      window.alert('系统名称不能为空！');
     } else {
       event.confirm.resolve(event.newData);
     }

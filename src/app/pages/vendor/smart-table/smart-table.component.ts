@@ -39,7 +39,7 @@ export class SmartTableComponent {
         title: '供应商名称',
         type: 'string',
       },
-      Vaddr: {
+      Vaddress: {
         title: '地址',
         type: 'string',
       },
