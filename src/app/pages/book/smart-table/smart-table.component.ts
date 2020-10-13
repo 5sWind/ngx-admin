@@ -1,9 +1,41 @@
 import { Component } from '@angular/core';
-import { LocalDataSource } from 'ng2-smart-table';
+import { LocalDataSource, ServerDataSource } from 'ng2-smart-table';
 import { SmartTableData } from '../../../@core/data/smart-table';
 import { SmartTableDatepickerComponent, SmartTableDatepickerRenderComponent } from '../../tables/smart-table-datepicker/smart-table-datepicker.component';
 import { SmartTableDateTimepickerComponent, SmartTableDateTimepickerRenderComponent } from '../../tables/smart-table-datepicker/smart-table-datetimepicker.component';
 import { TranslateService } from '@ngx-translate/core';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+
+export enum StateType {
+  BORROWABLE = 'B',
+  DISCONTINUED = 'D',
+  MAINTAINING = 'M',
+}
+export enum SpeciesType {
+  ELECTRONIC = 'E',
+  PAPER = 'P',
+}
+export interface Book {
+  warehouseId: number;
+  name: string;
+  type: string;
+  author: string;
+  press: string;
+  publication: Date;
+  isbn: string;
+  quantity: number;
+  img: string;
+  intro: string;
+  date: Date;
+  state: StateType;
+  language: string;
+  price: number;
+  species: SpeciesType;
+  geography: string;
+  warehouseDate: Date;
+  warehouseQuantity: number;
+  memo: string;
+}
 
 const SpeciesList = [
   { value: 'E', title: 'Electronic' },
@@ -44,31 +76,33 @@ export class SmartTableComponent {
       confirmDelete: true,
     },
     columns: {
-      Bid: {
+      id: {
         title: '图书ID',
         type: 'string',
+        editable: false,
+        addable: false,
       },
-      Wid: {
+      warehouseId: {
         title: '仓库ID',
         type: 'string',
       },
-      Bname: {
+      name: {
         title: '图书名称',
         type: 'string',
       },
-      Btype: {
+      type: {
         title: '分类',
         type: 'string',
       },
-      Bauthor: {
+      author: {
         title: '作者',
         type: 'string',
       },
-      Bpress: {
+      press: {
         title: '出版社',
         type: 'string',
       },
-      Bpublication: {
+      publication: {
         title: '出版日期',
         type: 'custom',
         renderComponent: SmartTableDatepickerRenderComponent,
@@ -77,23 +111,23 @@ export class SmartTableComponent {
           component: SmartTableDatepickerComponent,
         },
       },
-      Bisbn: {
+      isbn: {
         title: '国际标准书号',
         type: 'string',
       },
-      Bquantity: {
-        title: '备注',
+      quantity: {
+        title: '上架数量',
         type: 'number',
       },
-      Bimg: {
+      img: {
         title: '缩略图',
         type: 'string',
       },
-      Bintro: {
+      intro: {
         title: '图书描述',
         type: 'string',
       },
-      Bdate: {
+      date: {
         title: '上架时间',
         type: 'custom',
         renderComponent: SmartTableDateTimepickerRenderComponent,
@@ -102,7 +136,7 @@ export class SmartTableComponent {
           component: SmartTableDateTimepickerComponent,
         },
       },
-      Bstate: {
+      state: {
         title: '状态',
         filter: {
           type: 'list',
@@ -118,15 +152,15 @@ export class SmartTableComponent {
           },
         },
       },
-      Blanguage: {
+      language: {
         title: '语言',
         type: 'string',
       },
-      Bprice: {
+      price: {
         title: '定价',
         type: 'number',
       },
-      Bspecies: {
+      species: {
         title: '种类',
         filter: {
           type: 'list',
@@ -142,11 +176,11 @@ export class SmartTableComponent {
           },
         },
       },
-      Bgeography: {
+      geography: {
         title: '地理位置',
         type: 'string',
       },
-      BwarehouseDate: {
+      warehouseDate: {
         title: '入库日期',
         type: 'custom',
         renderComponent: SmartTableDatepickerRenderComponent,
@@ -155,23 +189,23 @@ export class SmartTableComponent {
           component: SmartTableDatepickerComponent,
         },
       },
-      BwarehouseQuantity: {
+      warehouseQuantity: {
         title: '入库数量',
         type: 'number',
       },
-      Bmemo: {
+      memo: {
         title: '备注',
         type: 'string',
       },
     },
   };
 
-  source: LocalDataSource = new LocalDataSource();
+  baseUrl: string = 'http://localhost:3000/book/';
+  source: ServerDataSource;
   message: string;
 
-  constructor(private service: SmartTableData, private translate: TranslateService) {
-    const data = this.service.getData();
-    this.source.load(data);
+  constructor(private service: SmartTableData, private translate: TranslateService, private http: HttpClient) {
+    this.source = new ServerDataSource(http, { endPoint: this.baseUrl });
   }
 
   onDeleteConfirm(event): void {
@@ -179,34 +213,65 @@ export class SmartTableComponent {
       this.message = text;
     });
     if (window.confirm(this.message)) {
-      event.confirm.resolve();
+      this.http.delete<any>(this.baseUrl + event.data.id).subscribe(
+        () => {
+          event.confirm.resolve(event.source.data);
+        },
+        (err: HttpErrorResponse) => {
+          window.alert(err.message);
+          throw err.error;
+        });
     } else {
       event.confirm.reject();
     }
   }
 
   onSaveConfirm(event): void {
-    this.onFormCheck(event);
+    const data = this.load(event);
+    this.http.put<Book>(this.baseUrl + event.data.id, data).subscribe(
+      () => {
+        event.confirm.resolve(event.newData);
+        this.source.refresh();
+      },
+      (err: HttpErrorResponse) => {
+        window.alert(err.message);
+        throw err.error;
+      });
   }
 
   onCreateConfirm(event): void {
-    this.onFormCheck(event);
+    const data = this.load(event);
+    this.http.post<Book>(this.baseUrl, data).subscribe(
+      () => {
+        event.confirm.resolve(event.newData);
+      },
+      (err: HttpErrorResponse) => {
+        window.alert(err.message);
+        throw err.error;
+      });
   }
 
-  onFormCheck(event): void {
-    if (!event.newData['Bid']) {
-      window.alert('图书ID不能为空！');
-    } else if (!event.newData['Wid']) {
-      window.alert('仓库ID不能为空！');
-    } else if (!event.newData['Bname']) {
-      window.alert('图书名称不能为空！');
-    } else if (!event.newData['Bauthor']) {
-      window.alert('作者不能为空！');
-    } else if (!event.newData['Bisbn']) {
-      window.alert('国际标准书号不能为空！');
-    } else {
-      event.confirm.resolve(event.newData);
-    }
-    event.confirm.reject();
+  load(event) {
+    return {
+      'warehouseId': event.newData.warehouseId,
+      'name': event.newData.name,
+      'type': event.newData.type,
+      'author': event.newData.author,
+      'press': event.newData.press,
+      'publication': event.newData.publication,
+      'isbn': event.newData.isbn,
+      'quantity': event.newData.quantity,
+      'img': event.newData.img,
+      'intro': event.newData.intro,
+      'date': event.newData.date,
+      'state': event.newData.state,
+      'language': event.newData.language,
+      'price': event.newData.price,
+      'species': event.newData.species,
+      'geography': event.newData.geography,
+      'warehouseDate': event.newData.warehouseDate,
+      'warehouseQuantity': event.newData.warehouseQuantity,
+      'memo': event.newData.memo,
+    };
   }
 }

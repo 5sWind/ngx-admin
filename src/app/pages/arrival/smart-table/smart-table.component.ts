@@ -1,9 +1,26 @@
 import { Component } from '@angular/core';
-import { LocalDataSource } from 'ng2-smart-table';
+import { LocalDataSource, ServerDataSource } from 'ng2-smart-table';
 import { SmartTableData } from '../../../@core/data/smart-table';
 import { SmartTableDatepickerComponent, SmartTableDatepickerRenderComponent } from '../../tables/smart-table-datepicker/smart-table-datepicker.component';
 import { TranslateService } from '@ngx-translate/core';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 
+export enum ResultType {
+  PASS = 'P',
+  INVALID = 'I',
+  UNHANDLED = 'U',
+}
+export interface Arrival {
+  bookId: number;
+  procurementId: number;
+  employeeId: number;
+  date: Date;
+  quantity?: number;
+  result?: ResultType;
+  pass?: number;
+  refill?: number;
+  memo?: string;
+}
 const ResultList = [
   { value: 'P', title: 'Pass' },
   { value: 'I', title: 'Invalid' },
@@ -38,23 +55,25 @@ export class SmartTableComponent {
       confirmDelete: true,
     },
     columns: {
-      Aid: {
+      id: {
         title: '到货单号',
-        type: 'string',
+        type: 'number',
+        editable: false,
+        addable: false,
       },
-      Bid: {
+      bookId: {
         title: '图书ID',
-        type: 'string',
+        type: 'number',
       },
-      Pid: {
+      procurementId: {
         title: '采购单号',
-        type: 'string',
+        type: 'number',
       },
-      Eid: {
+      employeeId: {
         title: '员工ID',
-        type: 'string',
+        type: 'number',
       },
-      Adate: {
+      date: {
         title: '到货日期',
         type: 'custom',
         renderComponent: SmartTableDatepickerRenderComponent,
@@ -63,11 +82,11 @@ export class SmartTableComponent {
           component: SmartTableDatepickerComponent,
         },
       },
-      Aquantity: {
+      quantity: {
         title: '实际到货数量',
         type: 'number',
       },
-      Aresult: {
+      result: {
         title: '检验结果',
         filter: {
           type: 'list',
@@ -83,27 +102,28 @@ export class SmartTableComponent {
           },
         },
       },
-      Apass: {
+      pass: {
         title: '合格到货数量',
         type: 'number',
       },
-      Arefill: {
+      refill: {
         title: '待补发数量',
         type: 'number',
       },
-      Amemo: {
+      memo: {
         title: '备注',
         type: 'string',
       },
     },
   };
 
-  source: LocalDataSource = new LocalDataSource();
+
+  baseUrl: string = 'http://localhost:3000/arrival/';
+  source: ServerDataSource;
   message: string;
 
-  constructor(private service: SmartTableData, private translate: TranslateService) {
-    const data = this.service.getData();
-    this.source.load(data);
+  constructor(private service: SmartTableData, private translate: TranslateService, private http: HttpClient) {
+    this.source = new ServerDataSource(http, { endPoint: this.baseUrl });
   }
 
   onDeleteConfirm(event): void {
@@ -111,32 +131,55 @@ export class SmartTableComponent {
       this.message = text;
     });
     if (window.confirm(this.message)) {
-      event.confirm.resolve();
+      this.http.delete<any>(this.baseUrl + event.data.id).subscribe(
+        () => {
+          event.confirm.resolve(event.source.data);
+        },
+        (err: HttpErrorResponse) => {
+          window.alert(err.message);
+          throw err.error;
+        });
     } else {
       event.confirm.reject();
     }
   }
 
   onSaveConfirm(event): void {
-    this.onFormCheck(event);
+    const data = this.load(event);
+    this.http.put<Arrival>(this.baseUrl + event.data.id, data).subscribe(
+      () => {
+        event.confirm.resolve(event.newData);
+        this.source.refresh();
+      },
+      (err: HttpErrorResponse) => {
+        window.alert(err.message);
+        throw err.error;
+      });
   }
 
   onCreateConfirm(event): void {
-    this.onFormCheck(event);
+    const data = this.load(event);
+    this.http.post<Arrival>(this.baseUrl, data).subscribe(
+      () => {
+        event.confirm.resolve(event.newData);
+      },
+      (err: HttpErrorResponse) => {
+        window.alert(err.message);
+        throw err.error;
+      });
   }
 
-  onFormCheck(event): void {
-    if (!event.newData['Aid']) {
-      window.alert('到货单号不能为空！');
-    } else if (!event.newData['Bid']) {
-      window.alert('图书ID不能为空！');
-    } else if (!event.newData['Pid']) {
-      window.alert('采购单号不能为空！');
-    } else if (!event.newData['Eid']) {
-      window.alert('员工ID不能为空！');
-    } else {
-      event.confirm.resolve(event.newData);
-    }
-    event.confirm.reject();
+  load(event) {
+    return {
+      'bookId': event.newData.bookId,
+      'procurementId': event.newData.procurementId,
+      'employeeId': event.newData.employeeId,
+      'date': event.newData.date,
+      'quantity': event.newData.quantity,
+      'result': event.newData.result,
+      'pass': event.newData.pass,
+      'refill': event.newData.refill,
+      'memo': event.newData.memo,
+    };
   }
 }

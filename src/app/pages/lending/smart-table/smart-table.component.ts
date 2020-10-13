@@ -1,8 +1,18 @@
 import { Component } from '@angular/core';
-import { LocalDataSource } from 'ng2-smart-table';
+import { LocalDataSource, ServerDataSource } from 'ng2-smart-table';
 import { SmartTableData } from '../../../@core/data/smart-table';
 import { SmartTableDatepickerComponent, SmartTableDatepickerRenderComponent } from '../../tables/smart-table-datepicker/smart-table-datepicker.component';
 import { TranslateService } from '@ngx-translate/core';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+
+export interface Lending {
+  bookId: number;
+  readerId: number;
+  employeeId: number;
+  date: Date;
+  return?: Date;
+  memo?: string;
+}
 @Component({
   selector: 'ngx-smart-table',
   templateUrl: './smart-table.component.html',
@@ -31,23 +41,25 @@ export class SmartTableComponent {
       confirmDelete: true,
     },
     columns: {
-      Lid: {
+      id: {
         title: '借阅ID',
-        type: 'string',
+        type: 'number',
+        editable: false,
+        addable: false,
       },
-      Bid: {
+      bookId: {
         title: '图书ID',
-        type: 'string',
+        type: 'number',
       },
-      Rid: {
+      readerId: {
         title: '读者ID',
-        type: 'string',
+        type: 'number',
       },
-      Eid: {
+      employeeId: {
         title: '员工ID',
-        type: 'string',
+        type: 'number',
       },
-      Ldate: {
+      date: {
         title: '借阅日期',
         type: 'custom',
         renderComponent: SmartTableDatepickerRenderComponent,
@@ -56,7 +68,7 @@ export class SmartTableComponent {
           component: SmartTableDatepickerComponent,
         },
       },
-      Lreturn: {
+      return: {
         title: '还书日期',
         type: 'custom',
         renderComponent: SmartTableDatepickerRenderComponent,
@@ -65,19 +77,20 @@ export class SmartTableComponent {
           component: SmartTableDatepickerComponent,
         },
       },
-      Lmemo: {
+      memo: {
         title: '备注',
         type: 'string',
       },
     },
   };
 
-  source: LocalDataSource = new LocalDataSource();
+
+  baseUrl: string = 'http://localhost:3000/lending/';
+  source: ServerDataSource;
   message: string;
 
-  constructor(private service: SmartTableData, private translate: TranslateService) {
-    const data = this.service.getData();
-    this.source.load(data);
+  constructor(private service: SmartTableData, private translate: TranslateService, private http: HttpClient) {
+    this.source = new ServerDataSource(http, { endPoint: this.baseUrl });
   }
 
   onDeleteConfirm(event): void {
@@ -85,32 +98,52 @@ export class SmartTableComponent {
       this.message = text;
     });
     if (window.confirm(this.message)) {
-      event.confirm.resolve();
+      this.http.delete<any>(this.baseUrl + event.data.id).subscribe(
+        () => {
+          event.confirm.resolve(event.source.data);
+        },
+        (err: HttpErrorResponse) => {
+          window.alert(err.message);
+          throw err.error;
+        });
     } else {
       event.confirm.reject();
     }
   }
 
   onSaveConfirm(event): void {
-    this.onFormCheck(event);
+    const data = this.load(event);
+    this.http.put<Lending>(this.baseUrl + event.data.id, data).subscribe(
+      () => {
+        event.confirm.resolve(event.newData);
+        this.source.refresh();
+      },
+      (err: HttpErrorResponse) => {
+        window.alert(err.message);
+        throw err.error;
+      });
   }
 
   onCreateConfirm(event): void {
-    this.onFormCheck(event);
+    const data = this.load(event);
+    this.http.post<Lending>(this.baseUrl, data).subscribe(
+      () => {
+        event.confirm.resolve(event.newData);
+      },
+      (err: HttpErrorResponse) => {
+        window.alert(err.message);
+        throw err.error;
+      });
   }
 
-  onFormCheck(event): void {
-    if (!event.newData['Lid']) {
-      window.alert('借阅ID不能为空！');
-    } else if (!event.newData['Bid']) {
-      window.alert('图书ID不能为空！');
-    } else if (!event.newData['Rid']) {
-      window.alert('读者ID不能为空！');
-    } else if (!event.newData['Eid']) {
-      window.alert('员工ID不能为空！');
-    } else {
-      event.confirm.resolve(event.newData);
-    }
-    event.confirm.reject();
+  load(event) {
+    return {
+      'bookId': event.newData.bookId,
+      'readerId': event.newData.readerId,
+      'employeeId': event.newData.employeeId,
+      'date': event.newData.date,
+      'return': event.newData.return,
+      'memo': event.newData.memo,
+    };
   }
 }

@@ -1,8 +1,16 @@
 import { Component } from '@angular/core';
-import { LocalDataSource } from 'ng2-smart-table';
+import { LocalDataSource, ServerDataSource } from 'ng2-smart-table';
 import { SmartTableData } from '../../../@core/data/smart-table';
 import { TranslateService } from '@ngx-translate/core';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 
+export interface System {
+  departmentId: number;
+  name: string;
+  location?: string;
+  source?: string;
+  memo?: string;
+}
 @Component({
   selector: 'ngx-smart-table',
   templateUrl: './smart-table.component.html',
@@ -31,39 +39,41 @@ export class SmartTableComponent {
       confirmDelete: true,
     },
     columns: {
-      Sid: {
+      id: {
         title: '系统ID',
-        type: 'string',
+        type: 'number',
+        editable: false,
+        addable: false,
       },
-      Did: {
+      departmentId: {
         title: '部门ID',
-        type: 'string',
+        type: 'number',
       },
-      Sname: {
+      name: {
         title: '系统名称',
         type: 'string',
       },
-      Slocation: {
+      location: {
         title: '位置信息',
         type: 'string',
       },
-      Ssource: {
+      source: {
         title: '来源信息',
         type: 'string',
       },
-      Smemo: {
+      memo: {
         title: '备注',
         type: 'string',
       },
     },
   };
 
-  source: LocalDataSource = new LocalDataSource();
+  baseUrl: string = 'http://localhost:3000/system/';
+  source: ServerDataSource;
   message: string;
 
-  constructor(private service: SmartTableData, private translate: TranslateService) {
-    const data = this.service.getData();
-    this.source.load(data);
+  constructor(private service: SmartTableData, private translate: TranslateService, private http: HttpClient) {
+    this.source = new ServerDataSource(http, { endPoint: this.baseUrl });
   }
 
   onDeleteConfirm(event): void {
@@ -71,30 +81,51 @@ export class SmartTableComponent {
       this.message = text;
     });
     if (window.confirm(this.message)) {
-      event.confirm.resolve();
+      this.http.delete<any>(this.baseUrl + event.data.id).subscribe(
+        () => {
+          event.confirm.resolve(event.source.data);
+        },
+        (err: HttpErrorResponse) => {
+          window.alert(err.message);
+          throw err.error;
+        });
     } else {
       event.confirm.reject();
     }
   }
 
   onSaveConfirm(event): void {
-    this.onFormCheck(event);
+    const data = this.load(event);
+    this.http.put<System>(this.baseUrl + event.data.id, data).subscribe(
+      () => {
+        event.confirm.resolve(event.newData);
+        this.source.refresh();
+      },
+      (err: HttpErrorResponse) => {
+        window.alert(err.message);
+        throw err.error;
+      });
   }
 
   onCreateConfirm(event): void {
-    this.onFormCheck(event);
+    const data = this.load(event);
+    this.http.post<System>(this.baseUrl, data).subscribe(
+      () => {
+        event.confirm.resolve(event.newData);
+      },
+      (err: HttpErrorResponse) => {
+        window.alert(err.message);
+        throw err.error;
+      });
   }
 
-  onFormCheck(event): void {
-    if (!event.newData['Sid']) {
-      window.alert('系统ID不能为空！');
-    } else if (!event.newData['Did']) {
-      window.alert('部门ID不能为空！');
-    } else if (!event.newData['Sname']) {
-      window.alert('系统名称不能为空！');
-    } else {
-      event.confirm.resolve(event.newData);
-    }
-    event.confirm.reject();
+  load(event) {
+    return {
+      'departmentId': event.newData.departmentId,
+      'name': event.newData.name,
+      'localtion': event.newData.localtion,
+      'source': event.newData.source,
+      'memo': event.newData.memo,
+    };
   }
 }

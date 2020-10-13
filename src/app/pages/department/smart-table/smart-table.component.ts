@@ -1,7 +1,14 @@
 import { Component } from '@angular/core';
-import { LocalDataSource } from 'ng2-smart-table';
+import { ServerDataSource } from 'ng2-smart-table';
 import { SmartTableData } from '../../../@core/data/smart-table';
 import { TranslateService } from '@ngx-translate/core';
+import { HttpClient } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
+
+export interface Department {
+  name: string;
+  memo: string;
+}
 
 @Component({
   selector: 'ngx-smart-table',
@@ -31,27 +38,29 @@ export class SmartTableComponent {
       confirmDelete: true,
     },
     columns: {
-      Did: {
+      id: {
         title: '部门ID',
-        type: 'string',
+        type: 'number',
+        editable: false,
+        addable: false,
       },
-      Dname: {
+      name: {
         title: '部门名称',
         type: 'string',
       },
-      Dmemo: {
+      memo: {
         title: '备注',
         type: 'string',
       },
     },
   };
 
-  source: LocalDataSource = new LocalDataSource();
+  baseUrl: string = 'http://localhost:3000/department/';
+  source: ServerDataSource;
   message: string;
 
-  constructor(private service: SmartTableData, private translate: TranslateService) {
-    const data = this.service.getData();
-    this.source.load(data);
+  constructor(private service: SmartTableData, private translate: TranslateService, private http: HttpClient) {
+    this.source = new ServerDataSource(http, { endPoint: this.baseUrl });
   }
 
   onDeleteConfirm(event): void {
@@ -59,26 +68,48 @@ export class SmartTableComponent {
       this.message = text;
     });
     if (window.confirm(this.message)) {
-      event.confirm.resolve();
+      this.http.delete<any>(this.baseUrl + event.data.id).subscribe(
+        () => {
+          event.confirm.resolve(event.source.data);
+        },
+        (err: HttpErrorResponse) => {
+          window.alert(err.message);
+          throw err.error;
+        });
     } else {
       event.confirm.reject();
     }
   }
 
   onSaveConfirm(event): void {
-    this.onFormCheck(event);
+    const data = this.load(event);
+    this.http.put<Department>(this.baseUrl + event.data.id, data).subscribe(
+      () => {
+        event.confirm.resolve(event.newData);
+        this.source.refresh();
+      },
+      (err: HttpErrorResponse) => {
+        window.alert(err.message);
+        throw err.error;
+      });
   }
 
   onCreateConfirm(event): void {
-    this.onFormCheck(event);
+    const data = this.load(event);
+    this.http.post<Department>(this.baseUrl, data).subscribe(
+      () => {
+        event.confirm.resolve(event.newData);
+      },
+      (err: HttpErrorResponse) => {
+        window.alert(err.message);
+        throw err.error;
+      });
   }
 
-  onFormCheck(event): void {
-    if (!event.newData['Did']) {
-      window.alert('部门ID不能为空！');
-    } else {
-      event.confirm.resolve(event.newData);
-    }
-    event.confirm.reject();
+  load(event) {
+    return {
+      'name': event.newData.name,
+      'memo': event.newData.memo,
+    };
   }
 }

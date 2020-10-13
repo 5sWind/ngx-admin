@@ -8,7 +8,7 @@ import { NbAccessChecker } from '@nebular/security';
 })
 
 export class EmployeeComponent {
-  constructor(public accessChecker: NbAccessChecker) { }
+  // constructor(public accessChecker: NbAccessChecker) { }
 
   // private alive = true;
 

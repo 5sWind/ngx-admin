@@ -1,8 +1,15 @@
 import { Component } from '@angular/core';
-import { LocalDataSource } from 'ng2-smart-table';
+import { LocalDataSource, ServerDataSource } from 'ng2-smart-table';
 import { SmartTableData } from '../../../@core/data/smart-table';
 import { TranslateService } from '@ngx-translate/core';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 
+export interface Warehouse {
+  employeeId: number;
+  name: string;
+  address: string;
+  memo: string;
+}
 @Component({
   selector: 'ngx-smart-table',
   templateUrl: './smart-table.component.html',
@@ -31,35 +38,37 @@ export class SmartTableComponent {
       confirmDelete: true,
     },
     columns: {
-      Wid: {
+      id: {
         title: '仓库ID',
-        type: 'string',
+        type: 'number',
+        editable: false,
+        addable: false,
       },
-      Eid: {
+      employeeId: {
         title: '员工ID',
-        type: 'string',
+        type: 'number',
       },
-      Wname: {
+      name: {
         title: '仓库名称',
         type: 'string',
       },
-      Waddress: {
+      address: {
         title: '仓库地址',
         type: 'string',
       },
-      Wmemo: {
+      memo: {
         title: '备注',
         type: 'string',
       },
     },
   };
 
-  source: LocalDataSource = new LocalDataSource();
+  baseUrl: string = 'http://localhost:3000/warehouse/';
+  source: ServerDataSource;
   message: string;
 
-  constructor(private service: SmartTableData, private translate: TranslateService) {
-    const data = this.service.getData();
-    this.source.load(data);
+  constructor(private service: SmartTableData, private translate: TranslateService, private http: HttpClient) {
+    this.source = new ServerDataSource(http, { endPoint: this.baseUrl });
   }
 
   onDeleteConfirm(event): void {
@@ -67,32 +76,50 @@ export class SmartTableComponent {
       this.message = text;
     });
     if (window.confirm(this.message)) {
-      event.confirm.resolve();
+      this.http.delete<any>(this.baseUrl + event.data.id).subscribe(
+        () => {
+          event.confirm.resolve(event.source.data);
+        },
+        (err: HttpErrorResponse) => {
+          window.alert(err.message);
+          throw err.error;
+        });
     } else {
       event.confirm.reject();
     }
   }
 
   onSaveConfirm(event): void {
-    this.onFormCheck(event);
+    const data = this.load(event);
+    this.http.put<Warehouse>(this.baseUrl + event.data.id, data).subscribe(
+      () => {
+        event.confirm.resolve(event.newData);
+        this.source.refresh();
+      },
+      (err: HttpErrorResponse) => {
+        window.alert(err.message);
+        throw err.error;
+      });
   }
 
   onCreateConfirm(event): void {
-    this.onFormCheck(event);
+    const data = this.load(event);
+    this.http.post<Warehouse>(this.baseUrl, data).subscribe(
+      () => {
+        event.confirm.resolve(event.newData);
+      },
+      (err: HttpErrorResponse) => {
+        window.alert(err.message);
+        throw err.error;
+      });
   }
 
-  onFormCheck(event): void {
-    if (!event.newData['Wid']) {
-      window.alert('仓库ID不能为空！');
-    } else if (!event.newData['Eid']) {
-      window.alert('员工ID不能为空！');
-    } else if (!event.newData['Wname']) {
-      window.alert('仓库名称不能为空！');
-    } else if (!event.newData['Waddress']) {
-      window.alert('仓库地址不能为空！');
-    } else {
-      event.confirm.resolve(event.newData);
-    }
-    event.confirm.reject();
+  load(event) {
+    return {
+      'employeeId': event.newData.employeeId,
+      'name': event.newData.name,
+      'address': event.newData.address,
+      'memo': event.newData.memo,
+    };
   }
 }

@@ -39,7 +39,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 }
 
 const formSetting: any = {
-  redirectDelay: 0,
+  redirectDelay: 500,
   strategy: 'email',
   showMessages: {
     success: true,
@@ -176,7 +176,7 @@ const formSetting: any = {
         requestPassword: formSetting,
         resetPassword: formSetting,
         logout: {
-          redirectDelay: 0,
+          redirectDelay: 500,
           strategy: 'email',
         },
         validation: {

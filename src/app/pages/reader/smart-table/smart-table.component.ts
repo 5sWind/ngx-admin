@@ -1,9 +1,26 @@
 import { Component } from '@angular/core';
-import { LocalDataSource } from 'ng2-smart-table';
+import { LocalDataSource, ServerDataSource } from 'ng2-smart-table';
 import { SmartTableData } from '../../../@core/data/smart-table';
 import { SmartTableDatepickerComponent, SmartTableDatepickerRenderComponent } from '../../tables/smart-table-datepicker/smart-table-datepicker.component';
 import { TranslateService } from '@ngx-translate/core';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 
+export enum ReaderType {
+  INTERNAL = 'I',
+  EXTERNAL = 'E',
+}
+export interface Reader {
+  cardno: string;
+  type?: ReaderType;
+  expiration?: Date;
+  name: string;
+  idno: string;
+  phone?: string;
+  email?: string;
+  register?: Date;
+  cancel?: Date;
+  memo?: string;
+}
 const TypeList = [
   { value: 'I', title: 'Internal' },
   { value: 'E', title: 'External' },
@@ -37,15 +54,17 @@ export class SmartTableComponent {
       confirmDelete: true,
     },
     columns: {
-      Rid: {
+      id: {
         title: '读者ID',
-        type: 'string',
+        type: 'number',
+        editable: false,
+        addable: false,
       },
-      Rcardno: {
+      cardno: {
         title: '读者证ID',
         type: 'string',
       },
-      Rtype: {
+      type: {
         title: '读者证类型',
         filter: {
           type: 'list',
@@ -61,7 +80,7 @@ export class SmartTableComponent {
           },
         },
       },
-      Rexpiration: {
+      expiration: {
         title: '读者证有效期',
         type: 'custom',
         renderComponent: SmartTableDatepickerRenderComponent,
@@ -70,23 +89,23 @@ export class SmartTableComponent {
           component: SmartTableDatepickerComponent,
         },
       },
-      Rname: {
+      name: {
         title: '姓名',
         type: 'string',
       },
-      Ridno: {
+      idno: {
         title: '身份证号',
         type: 'number',
       },
-      Rphone: {
+      phone: {
         title: '电话',
         type: 'number',
       },
-      Remail: {
+      email: {
         title: '邮箱',
         type: 'string',
       },
-      Rregister: {
+      register: {
         title: '注册日期',
         type: 'custom',
         renderComponent: SmartTableDatepickerRenderComponent,
@@ -95,7 +114,7 @@ export class SmartTableComponent {
           component: SmartTableDatepickerComponent,
         },
       },
-      Rcancel: {
+      cancel: {
         title: '注销日期',
         type: 'custom',
         renderComponent: SmartTableDatepickerRenderComponent,
@@ -104,19 +123,20 @@ export class SmartTableComponent {
           component: SmartTableDatepickerComponent,
         },
       },
-      Rmemo: {
+      memo: {
         title: '备注',
         type: 'string',
       },
     },
   };
 
-  source: LocalDataSource = new LocalDataSource();
+
+  baseUrl: string = 'http://localhost:3000/reader/';
+  source: ServerDataSource;
   message: string;
 
-  constructor(private service: SmartTableData, private translate: TranslateService) {
-    const data = this.service.getData();
-    this.source.load(data);
+  constructor(private service: SmartTableData, private translate: TranslateService, private http: HttpClient) {
+    this.source = new ServerDataSource(http, { endPoint: this.baseUrl });
   }
 
   onDeleteConfirm(event): void {
@@ -124,30 +144,56 @@ export class SmartTableComponent {
       this.message = text;
     });
     if (window.confirm(this.message)) {
-      event.confirm.resolve();
+      this.http.delete<any>(this.baseUrl + event.data.id).subscribe(
+        () => {
+          event.confirm.resolve(event.source.data);
+        },
+        (err: HttpErrorResponse) => {
+          window.alert(err.message);
+          throw err.error;
+        });
     } else {
       event.confirm.reject();
     }
   }
 
   onSaveConfirm(event): void {
-    this.onFormCheck(event);
+    const data = this.load(event);
+    this.http.put<Reader>(this.baseUrl + event.data.id, data).subscribe(
+      () => {
+        event.confirm.resolve(event.newData);
+        this.source.refresh();
+      },
+      (err: HttpErrorResponse) => {
+        window.alert(err.message);
+        throw err.error;
+      });
   }
 
   onCreateConfirm(event): void {
-    this.onFormCheck(event);
+    const data = this.load(event);
+    this.http.post<Reader>(this.baseUrl, data).subscribe(
+      () => {
+        event.confirm.resolve(event.newData);
+      },
+      (err: HttpErrorResponse) => {
+        window.alert(err.message);
+        throw err.error;
+      });
   }
 
-  onFormCheck(event): void {
-    if (!event.newData['Rid']) {
-      window.alert('读者ID不能为空！');
-    } else if (!event.newData['Rcardno']) {
-      window.alert('读者证ID不能为空！');
-    } else if (!event.newData['Ridno']) {
-      window.alert('身份证号不能为空！');
-    } else {
-      event.confirm.resolve(event.newData);
-    }
-    event.confirm.reject();
+  load(event) {
+    return {
+      'cardno': event.newData.cardno,
+      'type': event.newData.type,
+      'expiration': event.newData.expiration,
+      'name': event.newData.name,
+      'idno': event.newData.idno,
+      'phone': event.newData.phone,
+      'email': event.newData.email,
+      'register': event.newData.register,
+      'cancel': event.newData.cancel,
+      'memo': event.newData.memo,
+    };
   }
 }

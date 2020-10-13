@@ -1,7 +1,20 @@
 import { Component } from '@angular/core';
-import { LocalDataSource } from 'ng2-smart-table';
+import { ServerDataSource } from 'ng2-smart-table';
 import { SmartTableData } from '../../../@core/data/smart-table';
 import { TranslateService } from '@ngx-translate/core';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+
+export interface Vendor {
+  name: string;
+  address?: string;
+  fax?: string;
+  contact?: string;
+  phone?: string;
+  email?: string;
+  bank?: string;
+  account?: string;
+  memo?: string;
+}
 
 @Component({
   selector: 'ngx-smart-table',
@@ -31,55 +44,58 @@ export class SmartTableComponent {
       confirmDelete: true,
     },
     columns: {
-      Vid: {
+      id: {
         title: '供应商ID',
-        type: 'string',
+        type: 'number',
+        editable: false,
+        addable: false,
       },
-      Vname: {
+      name: {
         title: '供应商名称',
         type: 'string',
       },
-      Vaddress: {
+      address: {
         title: '地址',
         type: 'string',
       },
-      Vfax: {
+      fax: {
         title: '传真',
         type: 'number',
       },
-      Vcontact: {
+      contact: {
         title: '联系人',
         type: 'string',
       },
-      Vphone: {
+      phone: {
         title: '联系电话',
         type: 'number',
       },
-      Vemail: {
+      email: {
         title: '联系人邮箱',
         type: 'string',
       },
-      Vbank: {
+      bank: {
         title: '开户行',
         type: 'string',
       },
-      Vaccount: {
+      account: {
         title: '开户行账号',
         type: 'number',
       },
-      Vmemo: {
+      memo: {
         title: '备注',
         type: 'string',
       },
     },
   };
 
-  source: LocalDataSource = new LocalDataSource();
+
+  baseUrl: string = 'http://localhost:3000/vendor/';
+  source: ServerDataSource;
   message: string;
 
-  constructor(private service: SmartTableData, private translate: TranslateService) {
-    const data = this.service.getData();
-    this.source.load(data);
+  constructor(private service: SmartTableData, private translate: TranslateService, private http: HttpClient) {
+    this.source = new ServerDataSource(http, { endPoint: this.baseUrl });
   }
 
   onDeleteConfirm(event): void {
@@ -87,28 +103,55 @@ export class SmartTableComponent {
       this.message = text;
     });
     if (window.confirm(this.message)) {
-      event.confirm.resolve();
+      this.http.delete<any>(this.baseUrl + event.data.id).subscribe(
+        () => {
+          event.confirm.resolve(event.source.data);
+        },
+        (err: HttpErrorResponse) => {
+          window.alert(err.message);
+          throw err.error;
+        });
     } else {
       event.confirm.reject();
     }
   }
 
   onSaveConfirm(event): void {
-    this.onFormCheck(event);
+    const data = this.load(event);
+    this.http.put<Vendor>(this.baseUrl + event.data.id, data).subscribe(
+      () => {
+        event.confirm.resolve(event.newData);
+        this.source.refresh();
+      },
+      (err: HttpErrorResponse) => {
+        window.alert(err.message);
+        throw err.error;
+      });
   }
 
   onCreateConfirm(event): void {
-    this.onFormCheck(event);
+    const data = this.load(event);
+    this.http.post<Vendor>(this.baseUrl, data).subscribe(
+      () => {
+        event.confirm.resolve(event.newData);
+      },
+      (err: HttpErrorResponse) => {
+        window.alert(err.message);
+        throw err.error;
+      });
   }
 
-  onFormCheck(event): void {
-    if (!event.newData['Vid']) {
-      window.alert('供应商ID不能为空！');
-    } else if (!event.newData['Vname']) {
-      window.alert('供应商名称不能为空！');
-    } else {
-      event.confirm.resolve(event.newData);
-    }
-    event.confirm.reject();
+  load(event) {
+    return {
+      'name': event.newData.name,
+      'address': event.newData.address,
+      'fax': event.newData.fax,
+      'contact': event.newData.contact,
+      'phone': event.newData.phone,
+      'email': event.newData.email,
+      'bank': event.newData.bank,
+      'account': event.newData.account,
+      'memo': event.newData.memo,
+    };
   }
 }

@@ -1,9 +1,10 @@
 import { Component } from '@angular/core';
-import { LocalDataSource } from 'ng2-smart-table';
+import { LocalDataSource, ServerDataSource } from 'ng2-smart-table';
 
 import { SmartTableData } from '../../../@core/data/smart-table';
 import { SmartTableDatepickerComponent, SmartTableDatepickerRenderComponent } from '../../tables/smart-table-datepicker/smart-table-datepicker.component';
 import { TranslateService } from '@ngx-translate/core';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 
 const genderList = [
   { value: 'M', title: 'Male' },
@@ -18,7 +19,32 @@ const educationList = [
   { value: 'M', title: 'Master' },
   { value: 'D', title: 'Doctor' },
 ];
-
+export enum GenderType {
+  MALE = 'M',
+  FEMALE = 'F',
+  UNDECLARED = 'U',
+}
+export enum EducationType {
+  NOTAPPLY = 'N',
+  COLLEGE = 'F',
+  BACHELOR = 'U',
+  MASTER = 'M',
+  DOCTOR = 'D',
+}
+export interface Employee {
+  departmentId: number;
+  name: string;
+  gender?: GenderType;
+  birthday?: Date;
+  education?: EducationType;
+  title: string;
+  phone?: string;
+  email?: string;
+  contract?: Date;
+  enrollment?: Date;
+  resign?: Date;
+  memo?: string;
+}
 @Component({
   selector: 'ngx-smart-table',
   templateUrl: './smart-table.component.html',
@@ -47,19 +73,21 @@ export class SmartTableComponent {
       confirmDelete: true,
     },
     columns: {
-      Eid: {
+      id: {
         title: '员工ID',
-        type: 'string',
+        type: 'number',
+        editable: false,
+        addable: false,
       },
-      Did: {
+      departmentId: {
         title: '部门ID',
-        type: 'string',
+        type: 'number',
       },
-      Ename: {
+      name: {
         title: '姓名',
         type: 'string',
       },
-      Egender: {
+      gender: {
         title: '性别',
         filter: {
           type: 'list',
@@ -75,7 +103,7 @@ export class SmartTableComponent {
           },
         },
       },
-      Ebirthday: {
+      birthday: {
         title: '出生日期',
         type: 'custom',
         renderComponent: SmartTableDatepickerRenderComponent,
@@ -84,7 +112,7 @@ export class SmartTableComponent {
           component: SmartTableDatepickerComponent,
         },
       },
-      Eeducation: {
+      education: {
         title: '最高学历',
         filter: {
           type: 'list',
@@ -100,19 +128,19 @@ export class SmartTableComponent {
           },
         },
       },
-      Etitle: {
+      title: {
         title: '职务',
         type: 'string',
       },
-      Ephone: {
+      phone: {
         title: '电话',
         type: 'number',
       },
-      Eemail: {
+      email: {
         title: '邮箱',
         type: 'string',
       },
-      Econtract: {
+      contract: {
         title: '聘用到期日',
         type: 'custom',
         renderComponent: SmartTableDatepickerRenderComponent,
@@ -121,7 +149,7 @@ export class SmartTableComponent {
           component: SmartTableDatepickerComponent,
         },
       },
-      Eenrollment: {
+      enrollment: {
         title: '入职日期',
         type: 'custom',
         renderComponent: SmartTableDatepickerRenderComponent,
@@ -130,7 +158,7 @@ export class SmartTableComponent {
           component: SmartTableDatepickerComponent,
         },
       },
-      Eresign: {
+      resign: {
         title: '离职日期',
         type: 'custom',
         renderComponent: SmartTableDatepickerRenderComponent,
@@ -139,19 +167,19 @@ export class SmartTableComponent {
           component: SmartTableDatepickerComponent,
         },
       },
-      Ememo: {
+      memo: {
         title: '备注',
         type: 'string',
       },
     },
   };
 
-  source: LocalDataSource = new LocalDataSource();
+  baseUrl: string = 'http://localhost:3000/employee/';
+  source: ServerDataSource;
   message: string;
 
-  constructor(private service: SmartTableData, private translate: TranslateService) {
-    const data = this.service.getData();
-    this.source.load(data);
+  constructor(private service: SmartTableData, private translate: TranslateService, private http: HttpClient) {
+    this.source = new ServerDataSource(http, { endPoint: this.baseUrl });
   }
 
   onDeleteConfirm(event): void {
@@ -159,28 +187,58 @@ export class SmartTableComponent {
       this.message = text;
     });
     if (window.confirm(this.message)) {
-      event.confirm.resolve();
+      this.http.delete<any>(this.baseUrl + event.data.id).subscribe(
+        () => {
+          event.confirm.resolve(event.source.data);
+        },
+        (err: HttpErrorResponse) => {
+          window.alert(err.message);
+          throw err.error;
+        });
     } else {
       event.confirm.reject();
     }
   }
 
   onSaveConfirm(event): void {
-    this.onFormCheck(event);
+    const data = this.load(event);
+    this.http.put<Employee>(this.baseUrl + event.data.id, data).subscribe(
+      () => {
+        event.confirm.resolve(event.newData);
+        this.source.refresh();
+      },
+      (err: HttpErrorResponse) => {
+        window.alert(err.message);
+        throw err.error;
+      });
   }
 
   onCreateConfirm(event): void {
-    this.onFormCheck(event);
+    const data = this.load(event);
+    this.http.post<Employee>(this.baseUrl, data).subscribe(
+      () => {
+        event.confirm.resolve(event.newData);
+      },
+      (err: HttpErrorResponse) => {
+        window.alert(err.message);
+        throw err.error;
+      });
   }
 
-  onFormCheck(event): void {
-    if (!event.newData['Eid']) {
-      window.alert('员工ID不能为空！');
-    } else if (!event.newData['Did']) {
-      window.alert('部门ID不能为空！');
-    } else {
-      event.confirm.resolve(event.newData);
-    }
-    event.confirm.reject();
+  load(event) {
+    return {
+      'departmentId': event.newData.departmentId,
+      'name': event.newData.name,
+      'gender': event.newData.gender,
+      'birthday': event.newData.birthday,
+      'education': event.newData.education,
+      'title': event.newData.title,
+      'phone': event.newData.phone,
+      'email': event.newData.email,
+      'contract': event.newData.contract,
+      'enrollment': event.newData.enrollment,
+      'resign': event.newData.resign,
+      'memo': event.newData.memo,
+    };
   }
 }
