@@ -1,8 +1,8 @@
 import { Component } from '@angular/core';
 import { LocalDataSource, ServerDataSource } from 'ng2-smart-table';
 import { SmartTableData } from '../../../@core/data/smart-table';
-import { SmartTableDatepickerComponent, SmartTableDatepickerRenderComponent } from '../../tables/smart-table-datepicker/smart-table-datepicker.component';
-import { SmartTableDateTimepickerComponent, SmartTableDateTimepickerRenderComponent } from '../../tables/smart-table-datepicker/smart-table-datetimepicker.component';
+import { SmartTableDatepickerComponent, SmartTableDatepickerRenderComponent } from '../../../smart-table-datepicker/smart-table-datepicker.component';
+import { SmartTableDateTimepickerComponent, SmartTableDateTimepickerRenderComponent } from '../../../smart-table-datepicker/smart-table-datetimepicker.component';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 

@@ -68,10 +68,10 @@ export class TreeGridComponent {
       ],
     },
     {
-      data: { name: '心理学', kind: '目录', size: '18 MB', items: 2 },
+      data: { name: '心理学', kind: '目录', size: '5.2 MB', items: 2 },
       children: [
-        { data: { name: '亲密关系', kind: 'bkp', size: '17 MB' } },
-        { data: { name: '变态心理学（第6版）', kind: 'pdf', size: '1 MB' } },
+        { data: { name: '亲密关系', kind: 'epub', size: '1.5 MB' } },
+        { data: { name: '变态心理学（第6版）', kind: 'pdf', size: '3.7 MB' } },
       ],
     },
   ];

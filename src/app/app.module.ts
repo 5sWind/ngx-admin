@@ -22,8 +22,8 @@ import {
 } from '@nebular/theme';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from 'ng-pick-datetime';
-import { SmartTableDatepickerComponent, SmartTableDatepickerRenderComponent } from './pages/tables/smart-table-datepicker/smart-table-datepicker.component';
-import { SmartTableDateTimepickerComponent, SmartTableDateTimepickerRenderComponent } from './pages/tables/smart-table-datepicker/smart-table-datetimepicker.component';
+import { SmartTableDatepickerComponent, SmartTableDatepickerRenderComponent } from './smart-table-datepicker/smart-table-datepicker.component';
+import { SmartTableDateTimepickerComponent, SmartTableDateTimepickerRenderComponent } from './smart-table-datepicker/smart-table-datetimepicker.component';
 import { FormsModule } from '@angular/forms';
 import { AuthGuard } from './auth/auth-guard.service';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
