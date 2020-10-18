@@ -4,7 +4,7 @@ import { NgModule } from '@angular/core';
 import { PagesComponent } from './pages.component';
 import { EmployeeComponent } from './employee/employee.component';
 import { DepartmentComponent } from './department/department.component';
-import { DashboardComponent } from './e-commerce/e-commerce.component';
+import { DashboardComponent } from './dashboard/dashboard.component';
 import { NotFoundComponent } from './miscellaneous/not-found/not-found.component';
 import { BookComponent } from './book/book.component';
 import { ReaderComponent } from './reader/reader.component';

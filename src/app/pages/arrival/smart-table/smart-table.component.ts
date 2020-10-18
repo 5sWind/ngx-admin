@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { LocalDataSource, ServerDataSource } from 'ng2-smart-table';
+import { ServerDataSource } from 'ng2-smart-table';
 import { SmartTableData } from '../../../@core/data/smart-table';
 import { SmartTableDatepickerComponent, SmartTableDatepickerRenderComponent } from '../../tables/smart-table-datepicker/smart-table-datepicker.component';
 import { TranslateService } from '@ngx-translate/core';

@@ -6,7 +6,7 @@ import { PagesComponent } from './pages.component';
 import { EmployeeModule } from './employee/employee.module';
 import { DepartmentModule } from './department/department.module';
 import { BookModule } from './book/book.module';
-import { ECommerceModule } from './e-commerce/e-commerce.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 import { PagesRoutingModule } from './pages-routing.module';
 import { MiscellaneousModule } from './miscellaneous/miscellaneous.module';
 import { ReaderModule } from './reader/reader.module';
@@ -35,7 +35,7 @@ import { TranslateModule } from '@ngx-translate/core';
     ArrivalModule,
     DataModule,
     SystemModule,
-    ECommerceModule,
+    DashboardModule,
     MiscellaneousModule,
     TranslateModule,
   ],
